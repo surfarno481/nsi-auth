@@ -2,11 +2,14 @@
 
 [![Helm Chart](https://img.shields.io/badge/Helm%20Chart-available-blue)](https://bandwidthondemand.github.io/nsi-node/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-compatible-brightgreen)](https://kubernetes.io/)
-[![License](https://img.shields.io/badge/license-Apache License 2.0-lightgrey)](LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-lightgrey.svg)](https://opensource.org/licenses/Apache-2.0)
 
-The **NSI Authentication Server** (`nsi-auth`) is designed to integrate with Kubernetes ingress controllers such as **ingress-nginx**.
+The **NSI Authentication Server** (`nsi-auth`) is designed to integrate with
+Kubernetes ingress controllers such as **ingress-nginx**.
 
-When an authentication request is sent to `nsi-auth`, the server verifies whether the certificate’s **Distinguished Name (DN)**, provided in an HTTP header, is included in the list of allowed DNs.
+When an authentication request is sent to `nsi-auth`, the server verifies
+whether the certificate’s **Distinguished Name (DN)**, provided in an HTTP
+header, is included in the list of allowed DNs.
 
 - ✅ If the DN is authorized, the server responds with **HTTP 200 (OK)**  
 - ❌ If not authorized, it returns **HTTP 403 (Forbidden)**
@@ -29,7 +32,8 @@ When an authentication request is sent to `nsi-auth`, the server verifies whethe
 
 ### 1. Deploying `nsi-auth`
 
-`nsi-auth` is deployed via a Helm chart. The full list of configuration options can be found in [`chart/values.yaml`](chart/values.yaml).
+`nsi-auth` is deployed via a Helm chart. The full list of configuration options
+can be found in [`chart/values.yaml`](chart/values.yaml).
 
 Below is an example configuration snippet:
 
@@ -78,7 +82,7 @@ helm upgrade --install --values my-values.yaml nsi-auth chart
 
 > **Note:**
 >
-> The value configMap.name is defined as {{ .Release.Name }}-config and must match your Helm release name.
+> The value `configMap.name` is defined as `{{ .Release.Name }}-config` and must match your Helm release name.
 > In this example, the release name is nsi-auth.
 
 Alternatively, install directly from the nsi-node Helm repository:
@@ -91,15 +95,17 @@ helm upgrade --install --values my-values.yaml nsi-auth nsi-node/nsi-auth
 
 ### 2. CA Certificate Handling
 
-During installation, a Kubernetes secret named `{{ .Release.Name }}-ca` is automatically created.
-This secret contains a `ca.crt` file, which includes:
+During installation, a Kubernetes secret named `{{ .Release.Name }}-ca` is
+automatically created.  This secret contains a `ca.crt` file, which includes:
 
 - The list of CA certificates maintained by [cURL](https://curl.se/docs/caextract.html)
 - Any additional certificates defined under `config.additionalTrustedCA`
 
-This allows you to extend the trusted CA list with other certificates, including self-signed CAs if needed.
+This allows you to extend the trusted CA list with other certificates,
+including self-signed CAs if needed.
 
-The `ca.crt` secret is then used by the ingress controller to establish the trusted CA chain (see [Ingress Configuration](#4-ingress-configuration)).
+The `ca.crt` secret is then used by the ingress controller to establish the
+trusted CA chain (see [Ingress Configuration](#4-ingress-configuration)).
 
 ### 3. Configuration Options
 
@@ -112,8 +118,9 @@ The `ca.crt` secret is then used by the ingress controller to establish the trus
 
 **File reload behavior:**
 
-By default, `nsi-auth` uses a simple polling mechanism (every 5 seconds) to detect changes to the DN file.
-If `USE_WATCHDOG` is enabled, the `watchdog` module provides faster, event-based file monitoring.
+By default, `nsi-auth` uses a simple polling mechanism (every 5 seconds) to
+detect changes to the DN file.  If `USE_WATCHDOG` is enabled, the `watchdog`
+module provides faster, event-based file monitoring.
 
 > ⚠️ Note:
 > `watchdog` cannot be used when running in Kubernetes, because ConfigMap updates replace the file via symbolic
@@ -127,7 +134,8 @@ Finally, configure the ingress controller of the application to:
 2. Enable and verify **mutual TLS (mTLS)** authentication
 3. Forward the client certificate DN to `nsi-auth` for validation
 
-Assuming `nsi-auth` is deployed in the `production` namespace, use the following ingress annotations:
+Assuming `nsi-auth` is deployed in the `production` namespace, use the
+following ingress annotations:
 
 ```yaml
 nginx.ingress.kubernetes.io/auth-tls-secret: production/nsi-auth-ca
