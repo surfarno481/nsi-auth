@@ -92,7 +92,7 @@ autoscaling:
 volumes:
   - name: config
     configMap:
-      name: test-config
+      name: nsi-auth-config
       optional: false
 
 # Additional volumeMounts on the output Deployment definition.
@@ -109,7 +109,10 @@ affinity: {}
 
 # optional configmap with environment variables mounted into the pod
 env:
-  ALLOWED_CLIENT_SUBJECT_DN_PATH: /config/allowed_client_dn.txt
+  ALLOWED_CLIENT_SUBJECT_DN_PATH: "/config/allowed_client_dn.txt"
+  SSL_CLIENT_SUBJECT_DN_HEADER: "ssl-client-subject-dn"
+  USE_WATCHDOG: "False"
+  LOG_LEVEL: "INFO"
 
 # application configuration files
 config:
