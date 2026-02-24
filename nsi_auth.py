@@ -31,7 +31,8 @@ class Settings(BaseSettings):
 
     # ASSUME: DNs in this file are not necessarily in a X.509 DN normal form, so we'll parse
     # flexibly. File MUST be in UTF-8 encoding, following RFC4514.
-    allowed_client_subject_dn_strings_path: FilePath = FilePath("/config/allowed_client_dn.txt")
+    #allowed_client_subject_dn_strings_path: FilePath = FilePath("/config/allowed_client_dn.txt")
+    allowed_client_subject_dn_strings_path: FilePath = FilePath("allowed_client_dn.txt")
 
     # Kubernetes ingress NGINX's annotation: https://github.com/kubernetes/ingress-nginx/blob/main/docs/user-guide/nginx-configuration/annotations.md
     # defined as 'The subject information of the client certificate. Example: "CN=My Client"'
