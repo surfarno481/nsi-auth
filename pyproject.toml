@@ -36,6 +36,7 @@ dependencies = [
     "gunicorn",
     "pydantic-settings",
     "watchdog",
+    "cryptography",
 ]
 
 readme = "README.md"
