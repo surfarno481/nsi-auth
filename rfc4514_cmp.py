@@ -43,6 +43,7 @@ def dn_rfc2253_string_to_rfc4514_name(rfc2253_string):
         Raises:
             ValueError: If rfc2253_string is not a valid RFC2253 DN.
     """
+    # Output is big-to-small sorted
     return x509.Name.from_rfc4514_string(rfc2253_string,names2oid)
 
 def dn_tagvalue_string_to_rfc4514_name(tagvalue_string):
@@ -64,6 +65,7 @@ def dn_tagvalue_string_to_rfc4514_name(tagvalue_string):
     try:
         tvs = tagvalue_string.split(',')
         rdns = []
+        oidlist = []
         for tv in tvs:
             tag_string, value_string = tv.split('=')
             tag_string = tag_string.strip()
@@ -82,6 +84,7 @@ def dn_tagvalue_string_to_rfc4514_name(tagvalue_string):
                 # _name2oid is in lower-case.
                 tag_string = tag_string.lower()
             oid =  names2oid[tag_string]
+            oidlist.append(oid)
 
             # Cannot pass symbolic name, so Name with "GN" will not be equal to Name
             # with NameOID.GIVEN_NAME (1.xxx) :-(   Fix below
@@ -89,11 +92,27 @@ def dn_tagvalue_string_to_rfc4514_name(tagvalue_string):
             rdn = x509.RelativeDistinguishedName([na])
             rdns.append(rdn)
 
-        rdns.reverse()
+        # cryptography does not fix order, so if input was big-to-small this is not fixed automatically
+        # note that big-to-small is the internal representation.
+        firstoid = oidlist[0]
+        lastoid = oidlist[-1]
+        bigtosmall = True
+        # heuristic to determine order.
+        if firstoid == NameOID.COMMON_NAME:
+            bigtosmall = False
+        elif lastoid == NameOID.COUNTRY_NAME:
+            bigtosmall = False
+        if not bigtosmall:
+            rdns.reverse()
+
+
         n = x509.Name(rdns)
         # Hack to convert tag OIDs to symbolic names
         rfc4514_string = n.rfc4514_string(_oid2names)
-        return x509.Name.from_rfc4514_string(rfc4514_string,names2oid)
+        print("TAGVALUE STRING says", rfc4514_string)
+        n = x509.Name.from_rfc4514_string(rfc4514_string,names2oid)
+        print("TAGVALUE NAME says", n)
+        return n
     except ValueError as e:
         # Repeat ValueErrors from cryptography
         raise e
