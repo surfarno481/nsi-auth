@@ -74,3 +74,12 @@ def test_validate_rejects_non_get_methods(client: FlaskClient, method: str) -> N
     """Verify that the /validate endpoint only accepts GET requests."""
     response = getattr(client, method)("/validate")
     assert response.status_code == 405
+
+def test_validate_wrong_order_dn_header(client: FlaskClient) -> None:
+    """Verify that the /validate endpoint returns 403 with incorrect DN header.
+    header value must be in RFC2253 notation."""
+    headers = {
+        "ssl-client-subject-dn": "C=ZZ,O=Company Y,OU=Dept X,CN=CertA",
+    }
+    response = client.get("/validate", headers=headers)
+    assert response.status_code == 403
