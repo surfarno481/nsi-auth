@@ -10,6 +10,10 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+# TODO:
+# - Support other HTTP proxies than NGINX, most can send full cert.
+#
 """Verify DN from HTTP header against list of allowed DN's."""
 
 import base64
@@ -57,8 +61,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
 
-# State niet van BaseModel
-# Anders DataClass
+# State cannot inherit from BaseModel, as x509.name.Name does not play nice with PyDantic
+# Alternative is a DataClass, or no parent. Latter chosen.
 
 class State:
     """Application state."""
@@ -225,6 +229,7 @@ def validate() -> tuple[str, int]:
     # Main authentication line
     # x509.Name object equals method does comparison
     for allowed_dn_name in state.allowed_client_subject_dn_names:
+        print("COMPARE", request_rfc4514_name, "EXPECT", allowed_dn_name)
         if request_rfc4514_name == allowed_dn_name:
             app.logger.info(f"allow {request_dn}")
             return "OK", 200
