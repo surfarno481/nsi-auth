@@ -130,7 +130,6 @@ def validate() -> tuple[str, int]:
         if ',' in request_cert_str:
             app.logger.warning(f"multiple certificates in {settings.tls_client_cert_header} header on HTTP request, unsupported")
             return "Forbidden", 403
-            return "Forbidden", 403
         try:
             request_rfc4514_name = rfc4514_cmp.subject_dn_from_traefik_cert_pem(request_cert_str)
         except ValueError:
