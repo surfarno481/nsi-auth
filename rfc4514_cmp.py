@@ -140,7 +140,8 @@ def subject_dn_from_cert_pem(cert_pem_bytes):
     print(cert_pem_bytes)
     print("END")
     cert_obj = load_pem_x509_certificate(cert_pem_bytes)
-    return cert_obj.subject
+    subject_name = x509.Name(cert_obj.subject)
+    return subject_name
 
 
 def subject_dn_from_traefik_cert_pem(traefik_cert_str):

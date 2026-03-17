@@ -271,6 +271,18 @@ def validate() -> tuple[str, int]:
     for allowed_dn_name in state.allowed_client_subject_dn_names:
         print("COMPARE",request_rfc4514_name,allowed_dn_name)
         print("COMPARE REPR", request_rfc4514_name.rfc4514_string(), allowed_dn_name.rfc4514_string())
+        print("COMPARE HASH", hash(request_rfc4514_name), hash(allowed_dn_name))
+
+        print("TYPE r1",type(request_rfc4514_name))
+        print("TYPE a1",type(allowed_dn_name))
+        r1 = request_rfc4514_name.rdns # property
+        print("LIST a1")
+        a1 = allowed_dn_name.rdns # property
+        print("len LIST a1",len(a1))
+        print("len LIST r1",len(r1))
+        print("COMPARE RDNS", r1 == a1)
+        for i in range(len(a1)):
+            print("COMPARE ITEM",i,a1[i] == r1[i])
 
         for attribute in allowed_dn_name:
             print("ALLOW",attribute)
