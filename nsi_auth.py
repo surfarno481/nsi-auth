@@ -42,8 +42,7 @@ class Settings(BaseSettings):
 
     # ASSUME: DNs in this file are not necessarily in a X.509 DN normal form, so we'll parse
     # flexibly. File MUST be in UTF-8 encoding, following RFC4514.
-    #allowed_client_subject_dn_path: FilePath = FilePath("/config/allowed_client_dn.txt")
-    allowed_client_subject_dn_path: FilePath = FilePath("allowed_client_dn.txt")
+    allowed_client_subject_dn_path: FilePath = FilePath("/config/allowed_client_dn.txt")
 
     # Client TLS certificate Subject DistinguishedName as HTTPS Header:
     # -----------------------------------------------------------------
@@ -83,13 +82,12 @@ class Settings(BaseSettings):
 
 # State cannot inherit from BaseModel, as x509.name.Name does not play nice with PyDantic
 # Alternative is a DataClass, or no parent. Latter chosen.
-
 class State:
     """Application state."""
-    # "Unable to generate pydantic-core schema for <class 'cryptography.x509.name.Name'>."
-    # So we store as strings and compare as objects.
+    # Note: if we inherit from BaseModel we get "Unable to generate pydantic-core
+    # schema for <class 'cryptography.x509.name.Name'>."
+    # So we do not inherit ;o)
     allowed_client_subject_dn_names: list[x509.name.Name] = []
-    #allowed_client_subject_dn_strings: list[str] = []
 
 
 def init_app() -> Flask:
@@ -269,32 +267,10 @@ def validate() -> tuple[str, int]:
     # *** Main authentication line ***
     # x509.Name object equals method does comparison
     for allowed_dn_name in state.allowed_client_subject_dn_names:
-        print("COMPARE",request_rfc4514_name,allowed_dn_name)
-        print("COMPARE REPR", request_rfc4514_name.rfc4514_string(), allowed_dn_name.rfc4514_string())
-        print("COMPARE HASH", hash(request_rfc4514_name), hash(allowed_dn_name))
-
-        print("TYPE r1",type(request_rfc4514_name))
-        print("TYPE a1",type(allowed_dn_name))
-        r1 = request_rfc4514_name.rdns # property
-        print("LIST a1")
-        a1 = allowed_dn_name.rdns # property
-        print("len LIST a1",len(a1))
-        print("len LIST r1",len(r1))
-        print("COMPARE RDNS", r1 == a1)
-        for i in range(len(a1)):
-            print("COMPARE ITEM",i,a1[i] == r1[i])
-
-        for attribute in allowed_dn_name:
-            print("ALLOW",attribute)
-        for attribute in request_rfc4514_name:
-            print("REQUE",attribute)
-
         if request_rfc4514_name == allowed_dn_name:
-            print("EQUAL")
             app.logger.info(f"allow {request_rfc4514_name}")
             return "OK", 200
 
-    print("NO MATCH")
     app.logger.info(f"deny {request_rfc4514_name}")
     return "Forbidden", 403
 ### END ARNO

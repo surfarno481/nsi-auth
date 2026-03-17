@@ -112,9 +112,7 @@ def dn_tagvalue_string_to_rfc4514_name(tagvalue_string):
         n = x509.Name(rdns)
         # Hack to convert tag OIDs to symbolic names
         rfc4514_string = n.rfc4514_string(_oid2names)
-        print("TAGVALUE STRING says", rfc4514_string)
         n = x509.Name.from_rfc4514_string(rfc4514_string,names2oid)
-        print("TAGVALUE NAME says", n)
         return n
     except ValueError as e:
         # Repeat ValueErrors from cryptography
@@ -136,9 +134,6 @@ def subject_dn_from_cert_pem(cert_pem_bytes):
     Raises:
         ValueError: If cert_pem_str is not a valid PEM-encoded x.509 certificate.
     """
-    print("START")
-    print(cert_pem_bytes)
-    print("END")
     cert_obj = load_pem_x509_certificate(cert_pem_bytes)
     subject_name = x509.Name(cert_obj.subject)
     return subject_name
@@ -149,9 +144,6 @@ def subject_dn_from_traefik_cert_pem(traefik_cert_str):
     cryptography groks
     See https://cryptography.io/en/latest/faq/#why-can-t-i-import-my-pem-file
     """
-
-    print("TRAEFIK CERT", traefik_cert_str)
-
     delim_pem_cert_str = '-----BEGIN CERTIFICATE-----\n'
     #base64lines = re.findall('.{64}', traefik_cert_str)
     n = 64
@@ -164,6 +156,4 @@ def subject_dn_from_traefik_cert_pem(traefik_cert_str):
     # opaque bytes, but Python cannot do that, so use the old HTTP/1.1 standard header encoding.
     delim_pem_cert_bytes = bytes(delim_pem_cert_str, "iso-8859-1")
     s = subject_dn_from_cert_pem(delim_pem_cert_bytes)
-
-    print("TRAEFIK DN",s)
     return s
