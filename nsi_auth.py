@@ -70,6 +70,8 @@ class Settings(BaseSettings):
     # * ``In the example, it is the part between -----BEGIN CERTIFICATE----- and -----END CERTIFICATE----- delimiters :''
     #
     # * k8s ingress Traefik uses this header, see https://doc.traefik.io/traefik/v1.7/configuration/backends/kubernetes/#general-annotations
+    # ARNOTODO: find out if Traefik will send multiple certs if a chain is presented, see e.g.
+    # Internet2's example PEM cert (or is that some form of key chain / key store)
     tls_client_cert_header: str = "X-Forwarded-Tls-Client-Cert"
 
     # Do we look at DN or at FullCert for client authentication?
@@ -235,7 +237,8 @@ def validate() -> tuple[str, int]:
     """Verify the DN from the packet header against the list of allowed DN."""
     # https://werkzeug.palletsprojects.com/en/stable/datastructures/#werkzeug.datastructures.Headers
     # .get() returns str
-    if settings.tls_client_cert_header:
+
+    if settings.tls_use_cert_header:
         # Get DN from PEM certificate
         if not (request_cert_str := request.headers.get(settings.tls_client_cert_header)):
             app.logger.warning(f"no {settings.tls_client_cert_header} header on HTTP request")

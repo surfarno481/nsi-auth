@@ -32,6 +32,8 @@ def allowed_client_dn(tmp_path: Path) -> Path:
 def application(allowed_client_dn: Path, monkeypatch: MonkeyPatch) -> Generator[Flask, None, None]:
     """Create and configure a new app instance for each test."""
     monkeypatch.setenv("allowed_client_subject_dn_path", str(allowed_client_dn))
+    # These tests are for Header-based auth
+    monkeypatch.setenv("tls_use_cert_header", str("False"))
     from nsi_auth import app
 
     app.config.update(
