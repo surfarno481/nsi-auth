@@ -148,6 +148,9 @@ def subject_dn_from_traefik_cert_pem(traefik_cert_str):
     cryptography groks
     See https://cryptography.io/en/latest/faq/#why-can-t-i-import-my-pem-file
     """
+
+    print("TRAEFIK CERT", traefik_cert_str)
+
     delim_pem_cert_str = '-----BEGIN CERTIFICATE-----\n'
     #base64lines = re.findall('.{64}', traefik_cert_str)
     n = 64
@@ -156,5 +159,10 @@ def subject_dn_from_traefik_cert_pem(traefik_cert_str):
         delim_pem_cert_str += base64line+'\n'
     delim_pem_cert_str += '-----END CERTIFICATE-----\n'
 
-    delim_pem_cert_bytes = bytes(delim_pem_cert_str, "utf-8")
-    return subject_dn_from_cert_pem(delim_pem_cert_bytes)
+    # https://www.rfc-editor.org/rfc/rfc9110.html#name-fields says values must be considered
+    # opaque bytes, but Python cannot do that, so use the old HTTP/1.1 standard header encoding.
+    delim_pem_cert_bytes = bytes(delim_pem_cert_str, "iso-8859-1")
+    s = subject_dn_from_cert_pem(delim_pem_cert_bytes)
+
+    print("TRAEFIK DN",s)
+    return s
