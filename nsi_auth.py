@@ -248,8 +248,13 @@ def validate() -> tuple[str, int]:
         if ',' in request_cert_str:
             app.logger.warning(f"multiple certificates in {settings.tls_client_cert_header} header on HTTP request, unsupported")
             return "Forbidden", 403
-        request_rfc4514_name = rfc4514_cmp.subject_dn_from_traefik_cert_pem(request_cert_str)
-    else:        
+            return "Forbidden", 403
+        try:
+            request_rfc4514_name = rfc4514_cmp.subject_dn_from_traefik_cert_pem(request_cert_str)
+        except ValueError:
+            app.logger.warning(f"Not a properly encoded certificate in {settings.tls_client_cert_header} header in HTTP request")
+            return "Forbidden", 403
+    else:
         # DN is ASSUMEd to be sanitized as it comes from NGINX as RFC2253 DN...
         if not (request_dn := request.headers.get(settings.tls_client_subject_dn_header)):
             app.logger.warning(f"no {settings.tls_client_subject_dn_header} header on HTTP request")
@@ -264,11 +269,20 @@ def validate() -> tuple[str, int]:
     # *** Main authentication line ***
     # x509.Name object equals method does comparison
     for allowed_dn_name in state.allowed_client_subject_dn_names:
+        print("COMPARE",request_rfc4514_name,allowed_dn_name)
+        print("COMPARE REPR", request_rfc4514_name.rfc4514_string(), allowed_dn_name.rfc4514_string())
+
+        for attribute in allowed_dn_name:
+            print("ALLOW",attribute)
+        for attribute in request_rfc4514_name:
+            print("REQUE",attribute)
 
         if request_rfc4514_name == allowed_dn_name:
+            print("EQUAL")
             app.logger.info(f"allow {request_rfc4514_name}")
             return "OK", 200
 
+    print("NO MATCH")
     app.logger.info(f"deny {request_rfc4514_name}")
     return "Forbidden", 403
 ### END ARNO
