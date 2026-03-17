@@ -23,7 +23,7 @@ def allowed_client_dn(tmp_path: Path) -> Path:
     """Create a temporary file for testing client DNs."""
     path = tmp_path / "settings.json"
     # Arno: someone did not use openssl x509 -nameopt rfc2253
-    content = ("CN=Trust Anchor,O=Test Certificates 2011,C=US\n")  # fmt: skip
+    content = ("CN=Good CA,O=Test Certificates 2011,C=US\n")  # fmt: skip
     path.write_text(content, encoding="utf-8")
     return path
 
