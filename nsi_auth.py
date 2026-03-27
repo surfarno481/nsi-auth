@@ -17,6 +17,7 @@
 #
 """Verify DN from HTTP header against list of allowed DN's."""
 import threading
+import traceback
 from logging.config import dictConfig
 from typing import Callable
 from urllib.parse import unquote, unquote_plus
