@@ -33,7 +33,8 @@ def application(allowed_client_dn: Path, monkeypatch: MonkeyPatch) -> Generator[
     """Create and configure a new app instance for each test."""
     monkeypatch.setenv("allowed_client_subject_dn_path", str(allowed_client_dn))
     # These tests are for Cert-based auth
-    monkeypatch.setenv("tls_use_cert_header", str("True"))
+    monkeypatch.setenv("tls_client_subject_authn_header", str("X-Forwarded-Tls-Client-Cert"))
+
     from nsi_auth import app
 
     app.config.update(

@@ -13,6 +13,7 @@
 #
 # TODO:
 # - Support other HTTP proxies than NGINX + Traefik, most can send full cert.
+# - Test karl + CANARIE wildcard
 #
 """Verify DN from HTTP header against list of allowed DN's."""
 
@@ -121,6 +122,7 @@ settings = Settings()
 state = State()
 app = init_app()
 
+### BEGIN2 <<<<<<< HEAD
 ###BEGIN KARL HEAD
 
 def _escape_dn_value(value: str) -> str:
@@ -178,6 +180,10 @@ def extract_dn_from_traefik_header(header_value: str) -> str | None:
 
 
 def get_client_dn() -> tuple[str | None, str]:
+### BEGIN2 =======
+# Arno: pydantic cannot handle x509.Name
+def get_client_dn(): ### -> tuple[str | None, str]:
+### BEGIN2 >>>>>>> fb233da (Revamp passes all tests)
     """Extract client DN from request headers.
 
     Priority order:
@@ -186,7 +192,11 @@ def get_client_dn() -> tuple[str | None, str]:
     3. ssl-client-subject-dn or configured header (nginx fallback)
 
     Returns:
+### BEGIN2<<<<<<< HEAD
         Tuple of (dn, source) where source indicates which header was used.
+### BEGIN2=======
+        Tuple of (x509.Name, source) where source indicates which header was used.
+### BEGIN2 >>>>>>> fb233da (Revamp passes all tests)
     """
     pem_header = request.headers.get("X-Forwarded-Tls-Client-Cert")
     if pem_header:
@@ -194,11 +204,21 @@ def get_client_dn() -> tuple[str | None, str]:
         if dn:
             return dn, "traefik-pem"
 
+### BEGIN2 <<<<<<< HEAD
     traefik_header = request.headers.get("X-Forwarded-Tls-Client-Cert-Info")
     if traefik_header:
         dn = extract_dn_from_traefik_header(traefik_header)
         if dn:
             return dn, "traefik"
+### BEGIN2 =======
+        # Risk: if ingress does DN header, and malicous actor sends cert header, and the
+        # proxy does not strip it, we would trust the cert header. So check only the
+        # header from settings.
+        #
+        authn_header_val = request.headers.get(settings.tls_client_subject_authn_header)
+        if not authn_header_val:
+            return None, "missing"
+### BEGIN2 >>>>>>> fb233da (Revamp passes all tests)
 
     nginx_header = request.headers.get(settings.ssl_client_subject_dn_header)
     if nginx_header:
@@ -212,10 +232,16 @@ def validate() -> tuple[str, int]:
     """Verify the DN from the packet header against the list of allowed DN."""
     dn, source = get_client_dn()
 
+### BEGIN2 <<<<<<< HEAD
     if not dn:
         app.logger.warning(
             f"no client DN found in headers (tried X-Forwarded-Tls-Client-Cert, "
             f"X-Forwarded-Tls-Client-Cert-Info, {settings.ssl_client_subject_dn_header})"
+### BEGIN2 =======
+    if request_rfc4514_name is None:
+        app.logger.warning(
+            f"Missing authorization header or incorrect value: {settings.tls_client_subject_authn_header}: {source}"
+### BEGIN2 >>>>>>> fb233da (Revamp passes all tests)
         )
         return "Forbidden", 403
 
