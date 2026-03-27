@@ -13,6 +13,7 @@
 #
 # TODO:
 # - Support other HTTP proxies than NGINX + Traefik, most can send full cert.
+# - Test karl + CANARIE wildcard
 #
 """Verify DN from HTTP header against list of allowed DN's."""
 import threading
@@ -124,8 +125,8 @@ settings = Settings()
 state = State()
 app = init_app()
 
-
-def get_client_dn() -> tuple[str | None, str]:
+# Arno: pydantic cannot handle x509.Name
+def get_client_dn(): ### -> tuple[str | None, str]:
     """Extract client DN from request headers.
 
     Priority order:
@@ -135,9 +136,6 @@ def get_client_dn() -> tuple[str | None, str]:
 
     Returns:
         Tuple of (x509.Name, source) where source indicates which header was used.
-
-    Raises:
-        ValueError: If DN is not valid.
     """
     try:
         # https://werkzeug.palletsprojects.com/en/stable/datastructures/#werkzeug.datastructures.Headers
@@ -149,7 +147,7 @@ def get_client_dn() -> tuple[str | None, str]:
         #
         authn_header_val = request.headers.get(settings.tls_client_subject_authn_header)
         if not authn_header_val:
-            return None, f"Missing authorization header: {settings.tls_client_subject_authn_header}"
+            return None, "missing"
 
         if settings.tls_client_subject_authn_header == K8S_TRAEFIK_TLS_CLIENT_CERT_HEADER:
             # If Traefik this is in PEM with some changes, see above
@@ -184,14 +182,9 @@ def validate() -> tuple[str, int]:
     """Verify the DN from the packet header against the list of allowed DN."""
     request_rfc4514_name, source = get_client_dn()
 
-    t = type(request_rfc4514_name)
-    r = repr(request_rfc4514_name)
-    app.logger.info(f"ARNO: type is {t} repr {r} source {source}" )
-
     if request_rfc4514_name is None:
         app.logger.warning(
-            f"no client DN found in headers (tried X-Forwarded-Tls-Client-Cert, "
-            f"X-Forwarded-Tls-Client-Cert-Info, {K8S_NGINX_TLS_CLIENT_SUBJECT_DN_HEADER})"
+            f"Missing authorization header or incorrect value: {settings.tls_client_subject_authn_header}: {source}"
         )
         return "Forbidden", 403
 
