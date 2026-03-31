@@ -2,11 +2,11 @@
 # Official definition of distinguishedNameMatch
 # https://datatracker.ietf.org/doc/html/rfc4517#section-4.2.15
 #
+import base64
 import re
 from cryptography import x509
 from cryptography.x509.oid import ObjectIdentifier, NameOID
 from cryptography.x509 import load_pem_x509_certificate
-import traceback
 
 # Omissions cryptography's OIDs
 # Previous code tried to fix this by using a Mozilla compiled list of OIDs, oids.txt in:
@@ -222,7 +222,6 @@ def subject_dn_from_traefik_cert_pem(traefik_cert_str):
     See https://cryptography.io/en/latest/faq/#why-can-t-i-import-my-pem-file
     """
     delim_pem_cert_str = '-----BEGIN CERTIFICATE-----\n'
-    #base64lines = re.findall('.{64}', traefik_cert_str)
     n = 64
     base64lines = [traefik_cert_str[i:i + n] for i in range(0, len(traefik_cert_str), n)]
     for base64line in base64lines:
@@ -234,3 +233,41 @@ def subject_dn_from_traefik_cert_pem(traefik_cert_str):
     delim_pem_cert_bytes = bytes(delim_pem_cert_str, "iso-8859-1")
     s = subject_dn_from_cert_pem(delim_pem_cert_bytes)
     return s
+
+# Arno: Currently unused, pem_str does not contain ---BEGIN--- delimiters, according
+# to Traefik docs.
+def subject_dn_from_traefik_cert_karl(header_value: str) -> str | None:
+    """Extract DN from Traefik's X-Forwarded-Tls-Client-Cert header (URL-encoded PEM).
+
+    Parses the full certificate to access all subject fields including
+    organizationIdentifier (OID 2.5.4.97) and emailAddress (OID 1.2.840.113549.1.9.1).
+    Returns a normalized DN string in DER field order, or None on parse failure.
+    """
+    try:
+        # Traefik strips newlines from the PEM before URL-encoding (to prevent header injection),
+        # so load_pem_x509_certificate would fail on the re-assembled string. Instead, extract
+        # the base64 between the PEM markers and load as DER.
+        # Use unquote (not unquote_plus) to preserve '+' characters valid in base64.
+        pem_str = unquote(header_value)
+        b64 = re.sub(r"-----[^-]+-----", "", pem_str).replace(" ", "")
+        return subject_dn_from_cert_pem(b64)
+    except Exception as e:
+        app.logger.warning(f"failed to parse PEM from X-Forwarded-Tls-Client-Cert: {e!s}")
+        return None
+
+
+def subject_dn_from_traefik_cert_info(header_value: str) -> str | None:
+    """Extract DN from Traefik's X-Forwarded-Tls-Client-Cert-Info header.
+
+    Traefik format: Subject="CN=...,O=...,C=..."
+    Returns the DN string without the Subject="" wrapper, or None if not found.
+    """
+    # Match Subject="..." pattern and extract the DN
+    # Traefik URL-encodes the header value, so decode it first
+    match = re.search(r'Subject="([^"]+)"', unquote_plus(header_value))
+    if match:
+        info_subject_str = match.group(1)
+        # The format of the Subject field is controlled by the Traefik administrator,
+        # see above. So do flex parsing:
+        return dn_tagvalue_string_to_rfc4514_name(info_subject_str)
+    return None
