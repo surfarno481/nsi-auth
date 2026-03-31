@@ -17,10 +17,7 @@
 #
 """Verify DN from HTTP header against list of allowed DN's."""
 
-import base64
-import re
 import threading
-import traceback
 from logging.config import dictConfig
 from typing import Callable
 from urllib.parse import unquote, unquote_plus
@@ -58,25 +55,6 @@ class Settings(BaseSettings):
     #
     tls_client_subject_dn_header: str = "ssl-client-subject-dn"
 
-    # Full Client TLS certificate as HTTPS Header:
-    # --------------------------------------------
-    # For Traefik:
-    # * https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/passtlsclientcert/
-    # * ``that contains the pem.''
-    # * https://doc.traefik.io/traefik/reference/routing-configuration/http/middlewares/passtlsclientcert/#pem
-    # * ``The delimiters and \n will be removed.
-    # * If there are more than one certificate, they are separated by a ",".''
-    # * More elaborate:
-    # * https://doc.traefik.io/traefik/v2.1/middlewares/passtlsclientcert/
-    # * ``In the example, it is the part between -----BEGIN CERTIFICATE----- and -----END CERTIFICATE----- delimiters :''
-    #
-    # * k8s ingress Traefik uses this header, see https://doc.traefik.io/traefik/v1.7/configuration/backends/kubernetes/#general-annotations
-    # ARNOTODO: find out if Traefik will send multiple certs if a chain is presented, see e.g.
-    # Internet2's example PEM cert (or is that some form of key chain / key store)
-    tls_client_cert_header: str = "X-Forwarded-Tls-Client-Cert"
-
-    # Do we look at DN or at FullCert for client authentication?
-    tls_use_cert_header: bool = True
 
     use_watchdog: bool = False
     log_level: str = "INFO"
